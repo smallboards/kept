@@ -1,0 +1,874 @@
+<title>Kept</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f3f5f6;
+    --surface: #ffffff;
+    --surface-2: #eceff1;
+    --ink: #181d21;
+    --ink-dim: #54606b;
+    --ink-faint: #8794a0;
+    --line: #dfe4e8;
+    --line-soft: #ebeef1;
+    --accent: #2f6b58;
+    --accent-bg: #e4efea;
+    --good: #2f7a4f;
+    --good-bg: #e3f1e8;
+    --warn: #8a6410;
+    --warn-bg: #f7edd8;
+    --bad: #a33f38;
+    --bad-bg: #f6e4e2;
+    --shadow: 0 1px 2px rgba(20,30,40,.06), 0 4px 14px rgba(20,30,40,.05);
+    --display: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --body: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161a;
+      --surface: #1a2026;
+      --surface-2: #222a31;
+      --ink: #e8edf1;
+      --ink-dim: #a3b1bd;
+      --ink-faint: #74838f;
+      --line: #2c353d;
+      --line-soft: #242c33;
+      --accent: #6fbfa3;
+      --accent-bg: #1c2f29;
+      --good: #6fc998;
+      --good-bg: #162b1f;
+      --warn: #e0c477;
+      --warn-bg: #302916;
+      --bad: #e28c83;
+      --bad-bg: #331f1d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161a; --surface: #1a2026; --surface-2: #222a31;
+    --ink: #e8edf1; --ink-dim: #a3b1bd; --ink-faint: #74838f;
+    --line: #2c353d; --line-soft: #242c33;
+    --accent: #6fbfa3; --accent-bg: #1c2f29;
+    --good: #6fc998; --good-bg: #162b1f;
+    --warn: #e0c477; --warn-bg: #302916;
+    --bad: #e28c83; --bad-bg: #331f1d;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+  h1,h2,h3 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* ---------- tab shell ---------- */
+  .switch {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    padding: 9px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    font-family: var(--display); font-weight: 700; font-size: 13px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+    margin-right: 10px;
+  }
+  .switch button[role="tab"] {
+    background: none; border: 0; cursor: pointer; border-radius: 7px;
+    padding: 6px 11px; font-size: 13.5px; font-weight: 600; color: var(--ink-dim);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .switch button[role="tab"]:hover { background: var(--surface-2); }
+  .switch button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
+  .tally {
+    font-family: var(--mono); font-size: 11px; padding: 1px 5px; border-radius: 20px;
+    background: var(--surface-2); color: var(--ink-dim);
+  }
+  .switch button[aria-selected="true"] .tally { background: rgba(255,255,255,.22); color: var(--surface); }
+
+  .wrap { max-width: 1060px; margin: 0 auto; padding-inline: 16px; padding-block: 22px 56px; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--accent); }
+  .page-head h1 { font-size: 30px; letter-spacing: -.015em; margin-top: 2px; }
+  .page-head p { margin: 4px 0 0; color: var(--ink-dim); font-size: 14px; max-width: 58ch; }
+
+  .btn {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px 13px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink-dim);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--ink-faint); color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .btn.primary:hover { filter: brightness(1.08); color: var(--surface); }
+  .btn.tiny { padding: 4px 9px; font-size: 12px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; margin-bottom: 20px; }
+  .stat { background: var(--surface); padding: 12px 14px; }
+  .stat .k { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+  .stat .v { font-family: var(--mono); font-size: 20px; font-weight: 500; margin-top: 2px; }
+  .stat .v.good { color: var(--good); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 13px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow); }
+  .card-top { display: flex; gap: 11px; align-items: flex-start; }
+  .thumb { width: 58px; height: 58px; object-fit: cover; border-radius: 7px; border: 1px solid var(--line); background: var(--surface-2); flex-shrink: 0; }
+  .thumb-none { width: 58px; height: 58px; border-radius: 7px; border: 1px dashed var(--line); background: var(--surface-2); flex-shrink: 0; display: grid; place-items: center; color: var(--ink-faint); font-size: 17px; }
+  .card-name { font-weight: 600; font-size: 14.5px; line-height: 1.3; }
+  .card-name a { color: inherit; text-decoration: none; }
+  .card-name a:hover { color: var(--accent); text-decoration: underline; }
+  .chip { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; background: var(--surface-2); color: var(--ink-dim); margin-top: 4px; }
+
+  .price-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+  .price-now { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+  .price-was { font-family: var(--mono); font-size: 12.5px; color: var(--ink-faint); text-decoration: line-through; }
+  .spark-cap { font-size: 11px; color: var(--ink-faint); text-align: right; }
+
+  .flag { display: flex; gap: 7px; align-items: flex-start; border-radius: 7px; padding: 7px 9px; font-size: 12px; line-height: 1.45; }
+  .flag.hit { background: var(--good-bg); color: var(--good); }
+  .flag.hike { background: var(--warn-bg); color: var(--warn); }
+  .flag.dead { background: var(--bad-bg); color: var(--bad); }
+  .flag b { font-weight: 700; }
+
+  .target { display: flex; flex-direction: column; gap: 4px; }
+  .target-line { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-faint); }
+  .bar { height: 5px; border-radius: 20px; background: var(--surface-2); overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--accent); border-radius: 20px; }
+  .bar.met span { background: var(--good); }
+
+  .card-foot { display: flex; gap: 6px; justify-content: flex-end; border-top: 1px solid var(--line-soft); padding-top: 9px; margin-top: auto; }
+
+  details.note { border-top: 1px solid var(--line-soft); padding-top: 8px; }
+  details.note summary { cursor: pointer; font-size: 12px; color: var(--ink-faint); font-weight: 600; }
+  details.note div { font-size: 13px; color: var(--ink-dim); margin-top: 6px; white-space: pre-wrap; }
+
+  /* ---------- doorstep ---------- */
+  .pkg { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 13px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 11px; }
+  .pipe { display: flex; align-items: center; gap: 0; }
+  .stop { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; }
+  .stop .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--line); z-index: 1; }
+  .stop.done .dot { background: var(--accent); border-color: var(--accent); }
+  .stop.now .dot { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  .stop .lbl { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+  .stop.done .lbl, .stop.now .lbl { color: var(--ink-dim); }
+  .stop::before { content: ""; position: absolute; top: 5px; left: -50%; width: 100%; height: 2px; background: var(--line); }
+  .stop:first-child::before { display: none; }
+  .stop.done::before, .stop.now::before { background: var(--accent); }
+  .eta { font-size: 13px; color: var(--ink-dim); }
+  .eta b { color: var(--ink); }
+  .clock { font-size: 12px; border-radius: 7px; padding: 7px 9px; background: var(--surface-2); color: var(--ink-dim); }
+  .clock.soon { background: var(--warn-bg); color: var(--warn); }
+  .clock.gone { background: var(--bad-bg); color: var(--bad); }
+
+  /* ---------- closet ---------- */
+  .stage { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,260px); gap: 18px; align-items: start; margin-bottom: 22px; }
+  @media (max-width: 760px) { .stage { grid-template-columns: 1fr; } }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 15px; box-shadow: var(--shadow); min-height: 150px; }
+  .readout h2 { font-size: 19px; margin-bottom: 8px; }
+  .readout ul { margin: 0; padding-left: 17px; font-size: 14px; color: var(--ink-dim); }
+  .readout li { margin-bottom: 3px; }
+  .readout li b { color: var(--ink); font-weight: 600; }
+  .figure { display: flex; flex-direction: column; gap: 5px; }
+  .figure .fslot { display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; }
+  .figure .fslot .sw { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--line); flex-shrink: 0; }
+  .figure .fslot .nm { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .figure .fslot.empty { border-style: dashed; color: var(--ink-faint); }
+
+  .slot-head { display: flex; align-items: baseline; gap: 9px; margin: 18px 0 9px; }
+  .slot-head .code { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--accent); font-weight: 500; }
+  .slot-head h3 { font-size: 15px; }
+  .slot-head .n { font-size: 12px; color: var(--ink-faint); margin-left: auto; }
+  .rail { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 5px; }
+  .cond { display: flex; flex-direction: column; gap: 10px; background: var(--surface);
+          border: 1px solid var(--line); border-radius: 8px; padding: 13px 15px; margin-bottom: 16px; }
+  .cond-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+  .cond-row .k { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+                 color: var(--ink-faint); width: 56px; flex: none; }
+  .pill { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 5px 12px;
+          border-radius: 100px; border: 1px solid var(--line); background: transparent; color: var(--ink-dim); }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .cond-read { font-size: 12.5px; color: var(--ink-dim); line-height: 1.5; }
+  .cond-read b { color: var(--ink); }
+  /* A garment that fails the conditions is dimmed, never hidden — it is still yours
+     and still pickable by hand. */
+  .garment.off { opacity: .34; }
+  .slot-gap { font-size: 12.5px; color: var(--warn); background: var(--warn-bg);
+              border-radius: 6px; padding: 7px 10px; margin-top: 6px; }
+  .clash { font-size: 13px; color: var(--bad); background: var(--bad-bg); border-left: 3px solid var(--bad);
+           border-radius: 6px; padding: 10px 12px; margin: 10px 0 0; line-height: 1.5; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chips label { font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px;
+                 border: 1px solid var(--line); border-radius: 100px; padding: 4px 11px; cursor: pointer; }
+  .chips input { margin: 0; }
+  .garment { flex: 0 0 136px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 9px; cursor: pointer; text-align: left; }
+  .garment:hover { border-color: var(--ink-faint); }
+  .garment[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
+  .garment .sw { height: 46px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 7px; }
+  .garment .gn { font-size: 12.5px; font-weight: 600; line-height: 1.25; }
+  .garment .gc { font-size: 11px; color: var(--ink-faint); }
+
+  /* ---------- forms + empties ---------- */
+  dialog { border: 1px solid var(--line); border-radius: 13px; background: var(--surface); color: var(--ink); padding: 0; max-width: 540px; width: calc(100% - 32px); box-shadow: 0 18px 50px rgba(10,20,30,.26); }
+  dialog::backdrop { background: rgba(14,20,26,.45); }
+  .dlg-head { padding: 15px 17px 0; }
+  .dlg-head h2 { font-size: 19px; }
+  form.fields { padding: 13px 17px 17px; display: grid; gap: 11px; }
+  .fld { display: grid; gap: 4px; }
+  .fld label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .fld input, .fld select, .fld textarea {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  .fld textarea { min-height: 62px; resize: vertical; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  @media (max-width: 460px) { .two { grid-template-columns: 1fr; } }
+  .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+
+  .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 11px; padding: 30px 22px; text-align: center; color: var(--ink-dim); }
+  .empty h3 { font-size: 17px; color: var(--ink); margin-bottom: 6px; }
+  .empty p { margin: 0 auto 14px; max-width: 46ch; font-size: 14px; }
+  .signed-out { background: var(--warn-bg); color: var(--warn); border-radius: 9px; padding: 11px 13px; font-size: 13px; margin-bottom: 18px; }
+  .hint { font-size: 12.5px; color: var(--ink-faint); margin-top: 16px; }
+</style>
+
+<nav class="switch" role="tablist" aria-label="Which board">
+  <span class="brand">Kept</span>
+  <button type="button" role="tab" id="tab-sale" aria-controls="pane-sale" aria-selected="true">Sale Watch <span class="tally" id="tally-sale">0</span></button>
+  <button type="button" role="tab" id="tab-door" aria-controls="pane-door" aria-selected="false">Doorstep <span class="tally" id="tally-door">0</span></button>
+  <button type="button" role="tab" id="tab-clos" aria-controls="pane-clos" aria-selected="false">Cher&rsquo;s Closet <span class="tally" id="tally-clos">0</span></button>
+</nav>
+
+<div id="pane-sale" role="tabpanel" aria-labelledby="tab-sale">
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Board one</div>
+        <h1>Sale Watch</h1>
+        <p>Things you want but haven't bought. Record the price each time you check and the board works out whether a sale is real.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="sale-csv" type="button">Export CSV</button>
+        <button class="btn primary" id="sale-add" type="button">Add item</button>
+      </div>
+    </div>
+    <div id="sale-auth"></div>
+    <div class="stats" id="sale-stats"></div>
+    <div id="sale-body"></div>
+    <p class="hint">Prices don't update themselves. Open an item, tap <b>Check price</b>, and type what you see — that's what builds the history the badges read.</p>
+  </div>
+</div>
+
+<div id="pane-door" role="tabpanel" aria-labelledby="tab-door" hidden>
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Board two</div>
+        <h1>Doorstep</h1>
+        <p>What's coming, when it should land, and how long you have left to send it back.</p>
+      </div>
+      <button class="btn primary" id="door-add" type="button">Add package</button>
+    </div>
+    <div id="door-auth"></div>
+    <div class="stats" id="door-stats"></div>
+    <div id="door-body"></div>
+  </div>
+</div>
+
+<div id="pane-clos" role="tabpanel" aria-labelledby="tab-clos" hidden>
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Board three &middot; ugh, as if</div>
+        <h1>Cher&rsquo;s Closet</h1>
+        <p>Only things you actually own. Pick one per slot and the outfit assembles itself — or let it pick, which is the point of having a computer do your closet.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="clos-roll" type="button">Pick for me</button>
+        <button class="btn" id="clos-clear" type="button">Start over</button>
+        <button class="btn primary" id="clos-add" type="button">Add garment</button>
+      </div>
+    </div>
+    <div id="clos-auth"></div>
+    <section class="cond" aria-label="Conditions">
+      <div class="cond-row"><span class="k">Weather</span><span id="cond-temps"></span></div>
+      <div class="cond-row"><span class="k">Day</span><span id="cond-days"></span></div>
+      <p class="cond-read" id="cond-read"></p>
+    </section>
+    <section class="stage">
+      <div class="readout" id="clos-readout"></div>
+      <div class="figure" id="clos-figure"></div>
+    </section>
+    <div id="clos-body"></div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head"><h2 id="dlg-title">Add</h2></div>
+  <form class="fields" id="dlg-form" method="dialog"></form>
+</dialog>
+
+<script>
+// ---------------------------------------------------------------------------
+// Kept — a shareable template.
+//
+// Everything lives in the `db` capability, so the person using this page adds
+// and edits their own rows in the browser. Nothing is hardcoded, and the page
+// renders correctly against an empty database.
+//
+// Collections:
+//   items/{id}     Sale Watch     {name,url,image,category,price,firstPrice,
+//                                  target,history:[{date,price}],note}
+//   packages/{id}  Doorstep       {item,retailer,status,ordered,shipped,eta,
+//                                  delivered,carrier,tracking,returnDays,
+//                                  returnFrom,note}
+//   closet/{id}    Cher's Closet  {name,slot,color,note,
+//                                  warmth:[freezing|cold|mild|warm],
+//                                  days:[office|site|dinner|travel|home]}
+//
+// warmth and days are both optional. An untagged garment matches every
+// condition - absent tags must never hide something you own.
+// ---------------------------------------------------------------------------
+
+const SLOTS = [
+  ["LAYER", "Outer layer"],
+  ["TOP",   "Top"],
+  ["BTM",   "Bottom"],
+  ["SHOE",  "Shoes"],
+  ["ACC",   "Accessory"],
+];
+
+const STOPS = [["ordered","Ordered"],["shipped","Shipped"],["delivered","Delivered"]];
+
+// Two axes an outfit has to agree on. Each garment may tag itself with a subset;
+// tagging nothing means "fine for anything", so an empty closet still dresses you.
+const BANDS = [["freezing","Freezing"],["cold","Cold"],["mild","Mild"],["warm","Warm"]];
+const DAYKEYS = [["office","Office"],["site","Site visit"],["dinner","Dinner"],["travel","Travel"],["home","Home"]];
+const AXES = [
+  { key: "warmth", all: BANDS.map((b) => b[0]),   word: "weather",     labels: Object.fromEntries(BANDS) },
+  { key: "days",   all: DAYKEYS.map((d) => d[0]), word: "kind of day", labels: Object.fromEntries(DAYKEYS) },
+];
+const COND_KEY = "kept-cond";
+let cond = { temp: null, day: null };
+try { cond = Object.assign(cond, JSON.parse(localStorage.getItem(COND_KEY)) || {}); } catch (e) {}
+const saveCond = () => { try { localStorage.setItem(COND_KEY, JSON.stringify(cond)); } catch (e) {} };
+
+const tags = (g, ax) => (Array.isArray(g[ax.key]) && g[ax.key].length ? g[ax.key] : ax.all);
+const condOn = () => !!(cond.temp || cond.day);
+function suits(g) {
+  if (cond.temp && !tags(g, AXES[0]).includes(cond.temp)) return false;
+  if (cond.day && !tags(g, AXES[1]).includes(cond.day)) return false;
+  return true;
+}
+
+// Each slot is filtered on its own, so without this nothing stops a parka being
+// picked beside a pair of sandals. Everything worn together has to share at
+// least one value on each axis.
+const shared = (gs, ax) => gs.reduce((acc, g) => acc.filter((v) => tags(g, ax).includes(v)), ax.all);
+function clash(gs) {
+  if (gs.length < 2) return null;
+  for (const ax of AXES) {
+    if (shared(gs, ax).length) continue;
+    for (let i = 0; i < gs.length; i++) {
+      for (let j = i + 1; j < gs.length; j++) {
+        if (!shared([gs[i], gs[j]], ax).length) return { a: gs[i], b: gs[j], ax };
+      }
+    }
+    return { a: gs[0], b: gs[1], ax };
+  }
+  return null;
+}
+function describeCond() {
+  const bits = [];
+  if (cond.day) bits.push(AXES[1].labels[cond.day].toLowerCase());
+  if (cond.temp) bits.push(AXES[0].labels[cond.temp].toLowerCase() + " weather");
+  return bits.join(", ") || "any day";
+}
+
+const $  = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const money = (n) => (n == null || n === "" || isNaN(n)) ? "—" : "$" + Number(n).toFixed(2);
+const today = () => new Date().toISOString().slice(0, 10);
+const days  = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 86400000);
+function niceDate(d) {
+  if (!d) return "—";
+  const dt = new Date(d + "T12:00:00");
+  if (isNaN(dt)) return d;
+  return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// --- tab shell -------------------------------------------------------------
+(function () {
+  const KEY = "kept-tab";
+  const names = ["sale", "door", "clos"];
+  function show(which) {
+    names.forEach((n) => {
+      const pane = document.getElementById("pane-" + n);
+      const tab  = document.getElementById("tab-" + n);
+      const on = n === which;
+      pane.hidden = !on;
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    try { localStorage.setItem(KEY, which); } catch (e) {}
+  }
+  names.forEach((n) => document.getElementById("tab-" + n).addEventListener("click", () => show(n)));
+  let start = "sale";
+  try { const s = localStorage.getItem(KEY); if (names.includes(s)) start = s; } catch (e) {}
+  show(start);
+})();
+
+// --- data layer ------------------------------------------------------------
+const Store = {
+  db: null,
+  cache: { items: [], packages: [], closet: [] },
+  ready: false,
+
+  async connect() {
+    this.db = await window.claude?.use?.("db") ?? null;
+    this.ready = true;
+    if (!this.db) { renderAll(); return; }
+    for (const name of ["items", "packages", "closet"]) {
+      try {
+        this.db.collection(name).onSnapshot((snap) => {
+          this.cache[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          renderAll();
+        });
+      } catch (e) {
+        try {
+          const snap = await this.db.collection(name).get();
+          this.cache[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        } catch (e2) { this.cache[name] = []; }
+        renderAll();
+      }
+    }
+  },
+  async save(coll, id, data) {
+    if (!this.db) return false;
+    try { await this.db.collection(coll).doc(id).set(data); return true; }
+    catch (e) { alert("Could not save — you may not have edit access to this page."); return false; }
+  },
+  async remove(coll, id) {
+    if (!this.db) return false;
+    try { await this.db.collection(coll).doc(id).delete(); return true; }
+    catch (e) { alert("Could not delete — you may not have edit access to this page."); return false; }
+  },
+  newId: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+};
+
+function authNotice() {
+  if (!Store.ready) return "";
+  if (Store.db) return "";
+  return `<div class="signed-out"><b>Working offline.</b> Sign in to claude.ai in this browser to save items — the boards render, but nothing you add will persist.</div>`;
+}
+
+// --- generic dialog --------------------------------------------------------
+function openForm({ title, fields, values = {}, onSave, onDelete }) {
+  const dlg = $("#dlg"), form = $("#dlg-form");
+  $("#dlg-title").textContent = title;
+  form.innerHTML =
+    fields.map((f) => {
+      const v = values[f.k] ?? f.def ?? "";
+      if (f.type === "select") {
+        return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><select id="f-${f.k}" name="${f.k}">${
+          f.options.map((o) => `<option value="${esc(o[0])}"${String(v) === String(o[0]) ? " selected" : ""}>${esc(o[1])}</option>`).join("")
+        }</select></div>`;
+      }
+      if (f.type === "chips") {
+        const on = new Set(Array.isArray(v) ? v : []);
+        return `<div class="fld"><label>${esc(f.label)}</label><div class="chips">${
+          f.options.map(([val, lab]) => `<label><input type="checkbox" name="${f.k}" value="${esc(val)}"${
+            on.has(val) ? " checked" : ""}>${esc(lab)}</label>`).join("")
+        }</div></div>`;
+      }
+      if (f.type === "textarea") {
+        return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><textarea id="f-${f.k}" name="${f.k}" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea></div>`;
+      }
+      return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><input id="f-${f.k}" name="${f.k}" type="${f.type || "text"}"${f.step ? ` step="${f.step}"` : ""} placeholder="${esc(f.ph || "")}" value="${esc(v)}"></div>`;
+    }).join("") +
+    `<div class="dlg-foot">
+       ${onDelete ? `<button class="btn" type="button" id="f-del" style="margin-right:auto;color:var(--bad)">Delete</button>` : ""}
+       <button class="btn" type="button" id="f-cancel">Cancel</button>
+       <button class="btn primary" type="submit">Save</button>
+     </div>`;
+
+  $("#f-cancel").onclick = () => dlg.close();
+  if (onDelete) $("#f-del").onclick = async () => { if (confirm("Delete this for good?")) { await onDelete(); dlg.close(); } };
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const out = {};
+    for (const f of fields) {
+      if (f.type === "chips") {
+        out[f.k] = [...form.querySelectorAll(`input[name="${f.k}"]:checked`)].map((c) => c.value);
+        continue;
+      }
+      const el = form.elements[f.k];
+      let val = el ? el.value.trim() : "";
+      if (f.type === "number") val = val === "" ? null : Number(val);
+      out[f.k] = val;
+    }
+    await onSave(out);
+    dlg.close();
+  };
+  dlg.showModal();
+}
+
+// --- sparkline -------------------------------------------------------------
+function sparkline(history) {
+  const h = (history || []).filter((p) => p && p.price != null);
+  const w = 96, ht = 30, pad = 3;
+  if (h.length < 2) return `<svg width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}" role="img" aria-label="Not enough history to chart"><line x1="${pad}" y1="${ht/2}" x2="${w-pad}" y2="${ht/2}" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="2 3"/></svg>`;
+  const ps = h.map((p) => Number(p.price));
+  let min = Math.min(...ps), max = Math.max(...ps);
+  if (min === max) { min -= 1; max += 1; }
+  const x = (i) => pad + (i * (w - pad * 2)) / (h.length - 1);
+  const y = (v) => ht - pad - ((v - min) / (max - min)) * (ht - pad * 2);
+  const d = ps.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const last = ps[ps.length - 1], first = ps[0];
+  const stroke = last < first ? "var(--good)" : last > first ? "var(--warn)" : "var(--ink-faint)";
+  return `<svg width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}" role="img" aria-label="Price from ${money(first)} to ${money(last)}">
+    <path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(ps.length-1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="2.6" fill="${stroke}"/>
+  </svg>`;
+}
+
+// The one piece of judgement this board makes: retailers often raise a price
+// shortly before a sale so the discount reads bigger. Surface the most recent
+// rise, and say so plainly when it is recent enough to be positioning.
+function priceHike(item) {
+  const h = (item.history || []).filter((p) => p && p.price != null);
+  if (h.length < 2) return null;
+  let rise = null;
+  for (let i = 1; i < h.length; i++) if (Number(h[i].price) > Number(h[i-1].price)) rise = { from: Number(h[i-1].price), to: Number(h[i].price), date: h[i].date };
+  if (!rise) return null;
+  const pct = Math.round(((rise.to - rise.from) / rise.from) * 100);
+  const age = days(rise.date, today());
+  return { ...rise, pct, fresh: age <= 60 };
+}
+
+// --- Sale Watch ------------------------------------------------------------
+const SALE_FIELDS = [
+  { k: "name", label: "What is it", ph: "Brand and item" },
+  { k: "url", label: "Link", ph: "https://" },
+  { k: "image", label: "Image URL", ph: "optional" },
+  { k: "category", label: "Category", ph: "e.g. Coats" },
+  { k: "price", label: "Price now", type: "number", step: "0.01" },
+  { k: "target", label: "Buy at", type: "number", step: "0.01" },
+  { k: "note", label: "Why you want it", type: "textarea", ph: "Size, colourway, what it replaces…" },
+];
+
+function renderSale() {
+  const items = Store.cache.items.slice().sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  $("#tally-sale").textContent = items.length;
+  $("#sale-auth").innerHTML = authNotice();
+
+  const met = items.filter((i) => i.target != null && i.price != null && Number(i.price) <= Number(i.target));
+  const saved = items.reduce((s, i) => s + Math.max(0, (Number(i.firstPrice) || 0) - (Number(i.price) || 0)), 0);
+  $("#sale-stats").innerHTML = [
+    ["Watching", items.length],
+    ["At your price", met.length],
+    ["Tracked drop", money(saved), saved > 0],
+    ["Checked", items.length ? niceDate(items.map((i) => (i.history || []).map((p) => p.date)).flat().sort().pop()) : "—"],
+  ].map(([k, v, good]) => `<div class="stat"><div class="k">${k}</div><div class="v${good ? " good" : ""}">${esc(v)}</div></div>`).join("");
+
+  if (!items.length) {
+    $("#sale-body").innerHTML = `<div class="empty"><h3>Nothing on watch yet</h3>
+      <p>Add the first thing you're waiting to go on sale. Record its price now, then check back and record it again — two readings is all it takes for the board to start spotting real drops from fake ones.</p>
+      <button class="btn primary" type="button" onclick="document.getElementById('sale-add').click()">Add your first item</button></div>`;
+    return;
+  }
+
+  $("#sale-body").innerHTML = `<div class="grid">` + items.map((i) => {
+    const hike = priceHike(i);
+    const atTarget = i.target != null && i.price != null && Number(i.price) <= Number(i.target);
+    const dropped = i.firstPrice != null && i.price != null && Number(i.price) < Number(i.firstPrice);
+    const pct = i.target && i.price ? Math.min(100, Math.max(0, (Number(i.target) / Number(i.price)) * 100)) : 0;
+    return `<article class="card">
+      <div class="card-top">
+        ${i.image ? `<img class="thumb" src="${esc(i.image)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'thumb-none\\'>·</div>'">` : `<div class="thumb-none">·</div>`}
+        <div style="min-width:0">
+          <div class="card-name">${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name)}</a>` : esc(i.name)}</div>
+          ${i.category ? `<span class="chip">${esc(i.category)}</span>` : ""}
+        </div>
+      </div>
+      <div class="price-row">
+        <div>
+          <div class="price-now">${money(i.price)}</div>
+          ${dropped ? `<div class="price-was">${money(i.firstPrice)}</div>` : ""}
+        </div>
+        <div>${sparkline(i.history)}<div class="spark-cap">${(i.history || []).length} check${(i.history || []).length === 1 ? "" : "s"}</div></div>
+      </div>
+      ${atTarget ? `<div class="flag hit"><b>At your price.</b> You said buy at ${money(i.target)}.</div>` : ""}
+      ${hike ? `<div class="flag hike"><span><b>Price went UP ${hike.pct}%</b> on ${niceDate(hike.date)} — ${money(hike.from)} to ${money(hike.to)}.${hike.fresh ? " Recent enough to be pre-sale positioning: measure any discount against the old number." : ""}</span></div>` : ""}
+      ${i.target != null && !atTarget ? `<div class="target">
+        <div class="target-line"><span>Buy at ${money(i.target)}</span><span>${money(Number(i.price) - Number(i.target))} to go</span></div>
+        <div class="bar"><span style="width:${pct.toFixed(0)}%"></span></div>
+      </div>` : ""}
+      ${i.note ? `<details class="note"><summary>Notes</summary><div>${esc(i.note)}</div></details>` : ""}
+      <div class="card-foot">
+        <button class="btn tiny" type="button" data-check="${esc(i.id)}">Check price</button>
+        <button class="btn tiny" type="button" data-edit-item="${esc(i.id)}">Edit</button>
+      </div>
+    </article>`;
+  }).join("") + `</div>`;
+}
+
+$("#sale-add").onclick = () => openForm({
+  title: "Add to Sale Watch", fields: SALE_FIELDS,
+  onSave: async (v) => {
+    const id = Store.newId();
+    await Store.save("items", id, { ...v, firstPrice: v.price, history: v.price != null ? [{ date: today(), price: v.price }] : [], addedAt: today() });
+  },
+});
+
+// The viewer sandbox blocks plain <a download> links, so a save has to go
+// through the downloads capability. Hide the button where it isn't granted.
+let downloader = null;
+(async () => {
+  downloader = await window.claude?.use?.("downloads") ?? null;
+  if (!downloader) $("#sale-csv").hidden = true;
+})();
+
+$("#sale-csv").onclick = async () => {
+  if (!downloader) return;
+  const rows = [["Item","Category","First price","Current","Target","Checks","Link"]];
+  for (const i of Store.cache.items) rows.push([i.name, i.category, i.firstPrice, i.price, i.target, (i.history||[]).length, i.url]);
+  const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  try { await downloader.save({ filename: "sale-watch.csv", data: csv }); }
+  catch (e) { /* viewer declined, or not permitted — nothing to do */ }
+};
+
+// --- Doorstep --------------------------------------------------------------
+const DOOR_FIELDS = [
+  { k: "item", label: "What's coming" },
+  { k: "retailer", label: "From" },
+  { k: "status", label: "Status", type: "select", options: [["ordered","Ordered"],["shipped","Shipped"],["delivered","Delivered"]], def: "ordered" },
+  { k: "ordered", label: "Ordered on", type: "date" },
+  { k: "eta", label: "Expected", type: "date" },
+  { k: "delivered", label: "Delivered on", type: "date" },
+  { k: "carrier", label: "Carrier", ph: "USPS, UPS…" },
+  { k: "tracking", label: "Tracking number" },
+  { k: "returnDays", label: "Return window (days)", type: "number" },
+  { k: "returnFrom", label: "Clock starts", type: "select", options: [["delivered","When delivered"],["ordered","When ordered"]], def: "delivered" },
+  { k: "note", label: "Notes", type: "textarea" },
+];
+
+function returnClock(p) {
+  if (!p.returnDays) return null;
+  const from = (p.returnFrom === "ordered" ? p.ordered : p.delivered) || null;
+  if (!from) return null;
+  const left = Number(p.returnDays) - days(from, today());
+  if (left < 0) return { text: `Return window closed ${Math.abs(left)} day${Math.abs(left) === 1 ? "" : "s"} ago.`, cls: "gone" };
+  if (left <= 7) return { text: `${left} day${left === 1 ? "" : "s"} left to send it back.`, cls: "soon" };
+  return { text: `${left} days left to send it back.`, cls: "" };
+}
+
+function renderDoor() {
+  const pkgs = Store.cache.packages.slice().sort((a, b) => (a.eta || "9999").localeCompare(b.eta || "9999"));
+  const open = pkgs.filter((p) => p.status !== "delivered");
+  $("#tally-door").textContent = open.length;
+  $("#door-auth").innerHTML = authNotice();
+
+  const late = open.filter((p) => p.eta && days(p.eta, today()) > 0);
+  const closing = pkgs.map(returnClock).filter((c) => c && c.cls === "soon");
+  $("#door-stats").innerHTML = [
+    ["On the way", open.length],
+    ["Overdue", late.length],
+    ["Returns closing", closing.length],
+    ["Landed", pkgs.length - open.length],
+  ].map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+  if (!pkgs.length) {
+    $("#door-body").innerHTML = `<div class="empty"><h3>Nothing in transit</h3>
+      <p>Add an order and this board tracks it from ordered to delivered — and starts a countdown on the return window the moment it lands, which is the part everyone forgets.</p>
+      <button class="btn primary" type="button" onclick="document.getElementById('door-add').click()">Add a package</button></div>`;
+    return;
+  }
+
+  $("#door-body").innerHTML = `<div class="grid">` + pkgs.map((p) => {
+    const idx = STOPS.findIndex(([k]) => k === (p.status || "ordered"));
+    const clock = returnClock(p);
+    const overdue = p.status !== "delivered" && p.eta && days(p.eta, today()) > 0;
+    return `<article class="pkg">
+      <div>
+        <div class="card-name">${esc(p.item || "Untitled")}</div>
+        ${p.retailer ? `<span class="chip">${esc(p.retailer)}</span>` : ""}
+      </div>
+      <div class="pipe">${STOPS.map(([k, lbl], n) =>
+        `<div class="stop ${n < idx ? "done" : n === idx ? "now" : ""}"><div class="dot"></div><div class="lbl">${lbl}</div></div>`).join("")}</div>
+      <div class="eta">${p.status === "delivered"
+        ? `Landed <b>${niceDate(p.delivered || p.eta)}</b>`
+        : overdue ? `<b style="color:var(--bad)">Expected ${niceDate(p.eta)} — overdue</b>`
+        : p.eta ? `Expected <b>${niceDate(p.eta)}</b>` : `No date yet`}
+        ${p.carrier ? ` · ${esc(p.carrier)}` : ""}</div>
+      ${clock ? `<div class="clock ${clock.cls}">${esc(clock.text)}</div>` : ""}
+      ${p.note ? `<details class="note"><summary>Notes</summary><div>${esc(p.note)}</div></details>` : ""}
+      <div class="card-foot"><button class="btn tiny" type="button" data-edit-pkg="${esc(p.id)}">Edit</button></div>
+    </article>`;
+  }).join("") + `</div>`;
+}
+
+$("#door-add").onclick = () => openForm({
+  title: "Add a package", fields: DOOR_FIELDS, values: { ordered: today() },
+  onSave: async (v) => { await Store.save("packages", Store.newId(), v); },
+});
+
+// --- Closet ----------------------------------------------------------------
+const CLOS_FIELDS = [
+  { k: "name", label: "What is it" },
+  { k: "slot", label: "Slot", type: "select", options: SLOTS.map(([c, l]) => [c, l]), def: "TOP" },
+  { k: "color", label: "Colour swatch", type: "color", def: "#404a54" },
+  { k: "warmth", label: "Warm enough for", type: "chips", options: BANDS },
+  { k: "days", label: "Right for", type: "chips", options: DAYKEYS },
+  { k: "note", label: "Notes", type: "textarea", ph: "Fit, what it goes with…" },
+];
+const picks = {};
+
+function renderCond() {
+  const row = (el, axis, options, active) => {
+    el.innerHTML = options.map(([v, lab]) =>
+      `<button type="button" class="pill" data-cond="${axis}" data-val="${v}" aria-pressed="${active === v}">${lab}</button>`
+    ).join(" ");
+  };
+  row($("#cond-temps"), "temp", BANDS, cond.temp);
+  row($("#cond-days"), "day", DAYKEYS, cond.day);
+  const read = $("#cond-read");
+  const live = Store.cache.closet;
+  if (!condOn()) {
+    read.innerHTML = "No conditions set — everything is in play. Pick a temperature and what kind of day it is, and <b>Pick for me</b> will only choose things that suit it.";
+    return;
+  }
+  const ok = live.filter(suits).length;
+  read.innerHTML = `Dressing for <b>${esc(describeCond())}</b> · <b>${ok}</b> of ${live.length} `
+    + `${live.length === 1 ? "piece suits" : "pieces suit"} it. The rest are dimmed, not gone — you can still pick them.`;
+}
+
+function renderClos() {
+  const wardrobe = Store.cache.closet;
+  $("#tally-clos").textContent = wardrobe.length;
+  $("#clos-auth").innerHTML = authNotice();
+  renderCond();
+
+  $("#clos-figure").innerHTML = SLOTS.map(([code, label]) => {
+    const g = wardrobe.find((x) => x.id === picks[code]);
+    return `<div class="fslot ${g ? "" : "empty"}">
+      <div class="sw" style="background:${esc(g?.color || "transparent")}"></div>
+      <div class="nm">${g ? esc(g.name) : label}</div></div>`;
+  }).join("");
+
+  const chosen = SLOTS.map(([c]) => wardrobe.find((x) => x.id === picks[c])).filter(Boolean);
+  const bad = clash(chosen);
+  const says = (g, ax) => (Array.isArray(g[ax.key]) && g[ax.key].length
+    ? g[ax.key].map((v) => ax.labels[v] || v).join(" or ") : `any ${ax.word}`);
+  const warning = bad
+    ? `<p class="clash"><b>These two do not go together.</b> ${esc(bad.a.name)} is for ${esc(says(bad.a, bad.ax))};
+       ${esc(bad.b.name)} is for ${esc(says(bad.b, bad.ax))}. There is no ${bad.ax.word} both are right for.</p>`
+    : "";
+  $("#clos-readout").innerHTML = (chosen.length
+    ? `<h2>${chosen.length === SLOTS.length ? "That's the outfit" : "Coming together"}</h2>
+       <ul>${chosen.map((g) => `<li><b>${esc(g.name)}</b>${g.note ? ` — ${esc(g.note)}` : ""}</li>`).join("")}</ul>`
+    : `<h2>Nothing picked</h2><p style="color:var(--ink-dim);font-size:14px;margin:0">Tap a garment below to put it on, or hit <b>Pick for me</b> and let the board choose.</p>`) + warning;
+
+  if (!wardrobe.length) {
+    $("#clos-body").innerHTML = `<div class="empty"><h3>Your closet is empty</h3>
+      <p>Add things you already own, one per slot — a coat, a top, a bottom, shoes. The point isn't shopping: it's seeing what you can actually assemble from what's hanging up.</p>
+      <button class="btn primary" type="button" onclick="document.getElementById('clos-add').click()">Add a garment</button></div>`;
+    return;
+  }
+
+  $("#clos-body").innerHTML = SLOTS.map(([code, label]) => {
+    const rack = wardrobe.filter((g) => g.slot === code);
+    if (!rack.length) return "";
+    const gap = condOn() && !rack.some(suits)
+      ? `<div class="slot-gap">Nothing you own in this slot suits ${esc(describeCond())}.</div>` : "";
+    return `<div class="slot-head"><span class="code mono">${code}</span><h3>${label}</h3><span class="n">${rack.length}</span></div>${gap}
+      <div class="rail">${rack.map((g) => `
+        <button class="garment${suits(g) ? "" : " off"}" type="button" data-pick="${esc(code)}" data-id="${esc(g.id)}" aria-pressed="${picks[code] === g.id}">
+          <div class="sw" style="background:${esc(g.color || "var(--surface-2)")}"></div>
+          <div class="gn">${esc(g.name)}</div>
+          <div class="gc">${esc(g.note || "")}</div>
+        </button>`).join("")}</div>`;
+  }).join("");
+}
+
+$("#clos-add").onclick = () => openForm({
+  title: "Add a garment", fields: CLOS_FIELDS,
+  onSave: async (v) => { await Store.save("closet", Store.newId(), v); },
+});
+// Start over means start over: the outfit and the conditions, so nothing is
+// left dimmed on a rack you are looking at fresh.
+$("#clos-clear").onclick = () => {
+  for (const k of Object.keys(picks)) delete picks[k];
+  cond = { temp: null, day: null }; saveCond();
+  renderClos();
+};
+// Commit to one temperature and one kind of day first. Rolling each slot
+// independently is what puts a parka with a pair of sandals.
+$("#clos-roll").onclick = () => {
+  const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
+  const band = cond.temp || any(AXES[0].all);
+  const day = cond.day || any(AXES[1].all);
+  for (const [code] of SLOTS) {
+    const rack = Store.cache.closet.filter((g) => g.slot === code);
+    const fit = rack.filter((g) => tags(g, AXES[0]).includes(band) && tags(g, AXES[1]).includes(day));
+    const from = fit.length ? fit : rack;
+    if (from.length) picks[code] = any(from).id;
+  }
+  renderClos();
+};
+
+// --- delegated actions -----------------------------------------------------
+document.addEventListener("click", async (e) => {
+  const pill = e.target.closest("[data-cond]");
+  if (pill) {
+    const axis = pill.dataset.cond, val = pill.dataset.val;
+    cond[axis] = cond[axis] === val ? null : val;
+    saveCond(); renderClos();
+    return;
+  }
+  const pick = e.target.closest("[data-pick]");
+  if (pick) {
+    const slot = pick.dataset.pick, id = pick.dataset.id;
+    picks[slot] = picks[slot] === id ? undefined : id;
+    renderClos();
+    return;
+  }
+  const check = e.target.closest("[data-check]");
+  if (check) {
+    const item = Store.cache.items.find((i) => i.id === check.dataset.check);
+    if (!item) return;
+    const raw = prompt(`What is ${item.name} costing today?`, item.price ?? "");
+    if (raw === null) return;
+    const price = Number(String(raw).replace(/[^0-9.]/g, ""));
+    if (isNaN(price)) return;
+    const history = (item.history || []).slice();
+    const d = today();
+    if (history.length && history[history.length - 1].date === d) history[history.length - 1] = { date: d, price };
+    else history.push({ date: d, price });
+    const { id, ...rest } = item;
+    await Store.save("items", id, { ...rest, price, history, firstPrice: item.firstPrice ?? price });
+    return;
+  }
+  const ei = e.target.closest("[data-edit-item]");
+  if (ei) {
+    const item = Store.cache.items.find((i) => i.id === ei.dataset.editItem);
+    if (!item) return;
+    openForm({ title: "Edit item", fields: SALE_FIELDS, values: item,
+      onSave: async (v) => { const { id, ...rest } = item; await Store.save("items", id, { ...rest, ...v }); },
+      onDelete: async () => Store.remove("items", item.id) });
+    return;
+  }
+  const ep = e.target.closest("[data-edit-pkg]");
+  if (ep) {
+    const p = Store.cache.packages.find((x) => x.id === ep.dataset.editPkg);
+    if (!p) return;
+    openForm({ title: "Edit package", fields: DOOR_FIELDS, values: p,
+      onSave: async (v) => { const { id, ...rest } = p; await Store.save("packages", id, { ...rest, ...v }); },
+      onDelete: async () => Store.remove("packages", p.id) });
+  }
+});
+
+// --- boot ------------------------------------------------------------------
+function renderAll() { renderSale(); renderDoor(); renderClos(); }
+renderAll();
+Store.connect();
+</script>
