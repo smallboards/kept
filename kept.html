@@ -285,6 +285,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="clos-roll" type="button">Pick for me</button>
+        <button class="btn" id="clos-wore" type="button">I wore this</button>
         <button class="btn" id="clos-clear" type="button">Start over</button>
         <button class="btn primary" id="clos-add" type="button">Add garment</button>
       </div>
@@ -348,6 +349,9 @@ const AXES = [
   { key: "warmth", all: BANDS.map((b) => b[0]),   word: "weather",     labels: Object.fromEntries(BANDS) },
   { key: "days",   all: DAYKEYS.map((d) => d[0]), word: "kind of day", labels: Object.fromEntries(DAYKEYS) },
 ];
+const today = () => new Date().toISOString().slice(0, 10);
+const days  = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 86400000);
+
 const COND_KEY = "kept-cond";
 let cond = { temp: null, day: null };
 try { cond = Object.assign(cond, JSON.parse(localStorage.getItem(COND_KEY)) || {}); } catch (e) {}
@@ -378,6 +382,36 @@ function clash(gs) {
   }
   return null;
 }
+// --- how long before a thing goes back on ----------------------------------
+// Two different problems share one number. LAUNDRY: a tee worn against skin is
+// done after a day, wool is not. VARIETY: nobody wants the same four things on
+// repeat. Both ask "how many days before this is allowed back on", so one
+// number answers them. Shoes and accessories are 0 on purpose - they are meant
+// to repeat, and a coat is worn every day of a cold week.
+const REST = { LAYER: 2, TOP: 6, BTM: 3, SHOE: 0, ACC: 0 };
+const WORN_KEY = "kept-worn";
+let worn = {};
+try { worn = JSON.parse(localStorage.getItem(WORN_KEY)) || {}; } catch (e) {}
+const saveWorn = () => { try { localStorage.setItem(WORN_KEY, JSON.stringify(worn)); } catch (e) {} };
+// A garment can override the slot default. 0 means "straight back on" - denim
+// is the usual case, and washing it every wear is how it dies.
+const restDays = (g) => (typeof g.rest === "number" ? g.rest : (REST[g.slot] ?? 0));
+// Duplicates are a count, not extra cards. Three identical pairs of leggings is
+// three wears before the first is back from the wash, so count the wears inside
+// the window instead of only the most recent one.
+function restLeft(g, now) {
+  const r = restDays(g);
+  if (!r) return 0;
+  const n = Math.max(1, Number(g.copies) || 1);
+  const recent = Object.keys(worn)
+    .filter((d) => (worn[d] || []).includes(g.id) && days(d, now) < r)
+    .sort();
+  if (recent.length < n) return 0;
+  return Math.max(0, r - days(recent[recent.length - n], now));
+}
+const rested = (g, now) => restLeft(g, now) === 0;
+const wornOn = (d) => worn[d] || [];
+
 function describeCond() {
   const bits = [];
   if (cond.day) bits.push(AXES[1].labels[cond.day].toLowerCase());
@@ -388,8 +422,6 @@ function describeCond() {
 const $  = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const money = (n) => (n == null || n === "" || isNaN(n)) ? "—" : "$" + Number(n).toFixed(2);
-const today = () => new Date().toISOString().slice(0, 10);
-const days  = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 86400000);
 function niceDate(d) {
   if (!d) return "—";
   const dt = new Date(d + "T12:00:00");
@@ -483,7 +515,7 @@ function openForm({ title, fields, values = {}, onSave, onDelete }) {
       if (f.type === "textarea") {
         return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><textarea id="f-${f.k}" name="${f.k}" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea></div>`;
       }
-      return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><input id="f-${f.k}" name="${f.k}" type="${f.type || "text"}"${f.step ? ` step="${f.step}"` : ""} placeholder="${esc(f.ph || "")}" value="${esc(v)}"></div>`;
+      return `<div class="fld"><label for="f-${f.k}">${esc(f.label)}</label><input id="f-${f.k}" name="${f.k}" type="${f.type || "text"}"${f.step ? ` step="${f.step}"` : ""}${f.min != null ? ` min="${f.min}"` : ""} placeholder="${esc(f.ph || "")}" value="${esc(v)}"></div>`;
     }).join("") +
     `<div class="dlg-foot">
        ${onDelete ? `<button class="btn" type="button" id="f-del" style="margin-right:auto;color:var(--bad)">Delete</button>` : ""}
@@ -719,6 +751,8 @@ const CLOS_FIELDS = [
   { k: "color", label: "Colour swatch", type: "color", def: "#404a54" },
   { k: "warmth", label: "Warm enough for", type: "chips", options: BANDS },
   { k: "days", label: "Right for", type: "chips", options: DAYKEYS },
+  { k: "copies", label: "How many you own", type: "number", ph: "1", min: 1 },
+  { k: "rest", label: "Days off between wears", type: "number", ph: "slot default", min: 0 },
   { k: "note", label: "Notes", type: "textarea", ph: "Fit, what it goes with…" },
 ];
 const picks = {};
@@ -782,10 +816,12 @@ function renderClos() {
       ? `<div class="slot-gap">Nothing you own in this slot suits ${esc(describeCond())}.</div>` : "";
     return `<div class="slot-head"><span class="code mono">${code}</span><h3>${label}</h3><span class="n">${rack.length}</span></div>${gap}
       <div class="rail">${rack.map((g) => `
-        <button class="garment${suits(g) ? "" : " off"}" type="button" data-pick="${esc(code)}" data-id="${esc(g.id)}" aria-pressed="${picks[code] === g.id}">
+        <button class="garment${suits(g) && rested(g, today()) ? "" : " off"}" type="button" data-pick="${esc(code)}" data-id="${esc(g.id)}" aria-pressed="${picks[code] === g.id}">
           <div class="sw" style="background:${esc(g.color || "var(--surface-2)")}"></div>
           <div class="gn">${esc(g.name)}</div>
-          <div class="gc">${esc(g.note || "")}</div>
+          <div class="gc">${restLeft(g, today())
+            ? `resting &middot; ${restLeft(g, today())}d`
+            : esc(g.note || "")}</div>
         </button>`).join("")}</div>`;
   }).join("");
 }
@@ -796,6 +832,16 @@ $("#clos-add").onclick = () => openForm({
 });
 // Start over means start over: the outfit and the conditions, so nothing is
 // left dimmed on a rack you are looking at fresh.
+// Logging a wear is what makes resting mean anything. It records the outfit
+// that is on right now, so the rack knows what has just been out.
+$("#clos-wore").onclick = () => {
+  const on = SLOTS.map(([c]) => picks[c]).filter(Boolean);
+  if (!on.length) return;
+  const d = today();
+  worn[d] = [...new Set([...(worn[d] || []), ...on])];
+  saveWorn();
+  renderClos();
+};
 $("#clos-clear").onclick = () => {
   for (const k of Object.keys(picks)) delete picks[k];
   cond = { temp: null, day: null }; saveCond();
@@ -810,7 +856,9 @@ $("#clos-roll").onclick = () => {
   for (const [code] of SLOTS) {
     const rack = Store.cache.closet.filter((g) => g.slot === code);
     const fit = rack.filter((g) => tags(g, AXES[0]).includes(band) && tags(g, AXES[1]).includes(day));
-    const from = fit.length ? fit : rack;
+    // Resting is a preference, not a veto. One clean shirt still beats no shirt.
+    const fresh = fit.filter((g) => rested(g, today()));
+    const from = fresh.length ? fresh : (fit.length ? fit : rack);
     if (from.length) picks[code] = any(from).id;
   }
   renderClos();

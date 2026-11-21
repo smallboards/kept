@@ -6,15 +6,16 @@ const fs = require("fs"), vm = require("vm"), assert = require("assert");
 
 const page = fs.readFileSync(require("path").join(__dirname, "..", "kept.html"), "utf8");
 const from = page.indexOf("const BANDS = ");
-const to = page.indexOf("function describeCond()");
+const to = page.indexOf("const $  = (s, r = document)");
 assert.ok(from > -1 && to > from, "could not find the conditions block in kept.html");
 
 // `const` in a vm script stays in script scope rather than landing on the
 // context, so the block hands its own bindings back on the last expression.
 const ctx = { localStorage: { getItem: () => null, setItem() {} }, console };
 vm.createContext(ctx);
-const api = vm.runInContext(page.slice(from, to) + "\n;({ tags, suits, clash, shared, AXES, cond });", ctx);
-const { tags, suits, clash, shared, AXES, cond } = api;
+const api = vm.runInContext(page.slice(from, to) +
+  "\n;({ tags, suits, clash, shared, AXES, cond, REST, restDays, restLeft, rested, worn, days });", ctx);
+const { tags, suits, clash, shared, AXES, cond, REST, restDays, restLeft, rested, worn, days } = api;
 
 const parka  = { name: "Parka",   warmth: ["freezing", "cold"] };
 const sandal = { name: "Sandal",  warmth: ["warm"] };
@@ -62,4 +63,45 @@ cond.temp = null;
 assert.deepStrictEqual([...shared([parka, jeans], AXES[0])], ["cold"]);
 assert.deepStrictEqual([...shared([parka, sandal], AXES[0])], []);
 
-console.log("closet rules OK — 16 assertions");
+// --- resting -----------------------------------------------------------------
+// The wear log is the other half of dressing yourself: without it the same four
+// things come back every day. These are the rules that must not regress.
+const DAY = (n) => new Date(Date.UTC(2026, 0, 1 + n)).toISOString().slice(0, 10);
+const tee  = { id: "tee",  slot: "TOP",  name: "Tee" };
+const shoe = { id: "shoe", slot: "SHOE", name: "Boots" };
+const denim= { id: "den",  slot: "BTM",  name: "Jeans", rest: 0 };
+const legs = { id: "legs", slot: "BTM",  name: "Leggings", copies: 3 };
+
+// Slot defaults, and a garment's own number beating them.
+assert.strictEqual(restDays(tee), REST.TOP);
+assert.strictEqual(restDays(shoe), 0, "shoes are meant to repeat");
+assert.strictEqual(restDays(denim), 0, "an explicit 0 must beat the slot default");
+assert.strictEqual(restDays({ slot: "NOPE" }), 0, "an unknown slot must not throw");
+
+// Nothing worn yet: everything is free.
+assert.strictEqual(rested(tee, DAY(10)), true);
+
+// Worn today, and a 6-day tee owes 6 days.
+worn[DAY(10)] = ["tee", "shoe", "den"];
+assert.strictEqual(restLeft(tee, DAY(10)), REST.TOP);
+assert.strictEqual(restLeft(tee, DAY(13)), REST.TOP - 3);
+assert.strictEqual(restLeft(tee, DAY(16)), 0, "the window has to actually expire");
+assert.strictEqual(rested(shoe, DAY(10)), true, "a 0 never rests");
+assert.strictEqual(rested(denim, DAY(10)), true, "denim goes straight back on");
+
+// Duplicates: three pairs is three wears before the first is back.
+worn[DAY(20)] = ["legs"]; worn[DAY(21)] = ["legs"];
+assert.strictEqual(rested(legs, DAY(21)), true, "two wears of three copies is still free");
+worn[DAY(22)] = ["legs"];
+assert.strictEqual(rested(legs, DAY(22)), false, "the third wear uses the last copy");
+// Day 22 used the third copy, so it owes a day. By day 23 the day-20 wear has
+// aged out of a 3-day window and a copy is free again - the window slides, it
+// does not reset.
+assert.strictEqual(restLeft(legs, DAY(22)), 1);
+assert.strictEqual(restLeft(legs, DAY(23)), 0, "the oldest wear ages out and frees a copy");
+assert.strictEqual(rested(legs, DAY(23)), true);
+
+// A wear outside the window must not count against the copies.
+assert.strictEqual(rested({ id: "legs", slot: "BTM", copies: 1 }, DAY(40)), true);
+
+console.log("closet rules OK — 32 assertions");

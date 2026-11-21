@@ -71,3 +71,37 @@ It commits to one temperature and one kind of day first, then fills each slot
 within that. If a slot has nothing that fits, it falls back to the whole slot
 rather than leaving you half dressed — and the clash warning then explains why
 the result looks odd.
+
+## Resting
+
+A closet that only answers "what goes together" still puts the same four things
+on you every week. The wear log is the other half.
+
+Press **I wore this** and the outfit currently on is recorded against today.
+After that, anything still resting is dimmed on its rack with the days it owes,
+and **Pick for me** reaches past it.
+
+How long a thing rests comes from its slot:
+
+| slot | days | why |
+|---|---|---|
+| `TOP` | 6 | worn against skin, but wool is not done after a day |
+| `BTM` | 3 | the knit bottoms; set `rest` to 0 for denim |
+| `LAYER` | 2 | a cardigan is not dirty after one wear |
+| `SHOE` | 0 | shoes are meant to repeat |
+| `ACC` | 0 | so are earrings |
+
+Two per-garment fields override it:
+
+- **`rest`** — days off for this garment specifically. `0` means it goes straight
+  back on, which is the right answer for denim: washing jeans every wear is how
+  they die.
+- **`copies`** — how many identical ones you own. Three pairs of the same
+  leggings is three wears before the first is back from the wash, so the count
+  lives here rather than as three cards on the rack.
+
+Resting is a preference, not a veto. If everything in a slot is resting,
+**Pick for me** still picks — one clean shirt beats no shirt.
+
+Nothing leaves the browser: the log is a `kept-worn` key in `localStorage`,
+keyed by date.

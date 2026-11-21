@@ -199,6 +199,11 @@ the parka with the sandals in the first place.
 
 - Tap a garment to wear it; tap again to take it off.
 - **Pick for me** fills every slot. Good when you can't decide.
+- **I wore this** logs today's outfit, so the same four things stop coming back
+  every week. Anything still resting dims on its rack with the days it owes, and
+  **Pick for me** reaches past it. Set a garment's `rest` to 0 for denim, and
+  `copies` to 3 if you own three identical pairs. See
+  [docs/CLOSET.md](docs/CLOSET.md#resting).
 - **Start over** clears the outfit and the conditions together.
 - The tab you were last on is the one that opens next time.
 - Light and dark both work — it follows your system theme.
