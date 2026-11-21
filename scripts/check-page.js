@@ -93,9 +93,26 @@ if (process.argv.includes("--self-test")) {
 }
 
 // Everything that ships, not just the page — a LICENSE leaks as readily as HTML.
-const shipped = require("child_process")
-  .execSync("git ls-files", { cwd: path.join(__dirname, "..") })
-  .toString().split("\n").filter(Boolean);
+// git ls-files is the right list when this is a clone, but the repo is also handed
+// around as a zip, and there `git` exits 128 and takes the whole check down with it.
+// Walk the tree instead when that happens, skipping the places nothing shipped lives.
+const SKIP = new Set([".git", "node_modules", ".leakwords"]);
+const walk = (dir, base = "") =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    if (SKIP.has(e.name)) return [];
+    const rel = base ? `${base}/${e.name}` : e.name;
+    return e.isDirectory() ? walk(path.join(dir, e.name), rel) : [rel];
+  });
+const root = path.join(__dirname, "..");
+let shipped;
+try {
+  shipped = require("child_process")
+    .execSync("git ls-files", { cwd: root, stdio: ["ignore", "pipe", "ignore"] })
+    .toString().split("\n").filter(Boolean);
+  if (!shipped.length) shipped = walk(root);
+} catch (e) {
+  shipped = walk(root);
+}
 shipped.forEach((rel) => {
   let text;
   try { text = fs.readFileSync(path.join(__dirname, "..", rel), "utf8"); } catch (e) { return; }
